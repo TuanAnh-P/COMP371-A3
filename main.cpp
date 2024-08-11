@@ -1,36 +1,28 @@
-#include <iostream> // For input and output operations
-#include <vector>   // For using the std::vector container
-#include <GL/glew.h> // For handling OpenGL extensions
-#include <GLFW/glfw3.h> // For creating and managing windows and OpenGL contexts
-#include <glm/glm.hpp> // For glm::mat4 and glm::vec3
-#include <glm/gtc/matrix_transform.hpp> // For glm::translate, glm::rotate, and glm::scale
-#include <glm/gtc/type_ptr.hpp> // For glm::value_ptr
-#include "tiny_obj_loader.h" // For loading OBJ files
+#include <iostream>                        // Standard input/output stream library
+#include <vector>                          // For using the std::vector container
+#include <GL/glew.h>                       // GLEW library for managing OpenGL extensions
+#include <GLFW/glfw3.h>                    // GLFW library for creating windows and handling input
+#include <glm/glm.hpp>                     // GLM library for handling matrices and vectors
+#include <glm/gtc/matrix_transform.hpp>    // GLM utilities for matrix transformations
+#include <glm/gtc/type_ptr.hpp>            // GLM utilities for converting matrices to pointer types
+#include "tiny_obj_loader.h"               // For loading OBJ files
 
 // Vertex Shader source code
 const char* vertexShaderSource = R"glsl(
-#version 330 core
-// Specify the layout location for the vertex position attribute
-layout (location = 0) in vec3 aPos;
-
-// Define a uniform variable for the transformation matrix
-uniform mat4 transform;
-
+#version 330 core                           // Specify OpenGL version 3.3 core
+layout (location = 0) in vec3 aPos;         // Input vertex attribute position at location 0
+uniform mat4 transform;                     // Uniform matrix for transformations
 void main() {
-    // Transform the vertex position and set it to gl_Position
-    gl_Position = transform * vec4(aPos, 1.0);
+    gl_Position = transform * vec4(aPos, 1.0); // Apply transformation to vertex position
 }
 )glsl";
 
 // Fragment Shader source code
 const char* fragmentShaderSource = R"glsl(
-#version 330 core
-// Specify the output color of the fragment
-out vec4 FragColor;
-
+#version 330 core                           // Specify OpenGL version 3.3 core
+out vec4 FragColor;                         // Output fragment color
 void main() {
-    // Set the color of the fragment to white
-    FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f); // White color
+    FragColor = vec4(1.0f, 1.0f, 1.0f, 1.0f); // Set output color to white
 }
 )glsl";
 
@@ -39,56 +31,44 @@ void processInput(GLFWwindow* window, glm::mat4 &transform);
 
 int main()
 {
-    // Initialize GLFW library
-    if (!glfwInit()) {
-        std::cerr << "Failed to initialize GLFW" << std::endl; // Print error message if initialization fails
-        return -1; // Exit the program with an error code
-    }
+    // Initialize the GLFW library
+    glfwInit();
 
-    // Set GLFW window hints for OpenGL version and profile
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // Set major version of OpenGL
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3); // Set minor version of OpenGL
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // Use the core profile
+    // Set the OpenGL version to 3.3 and use the core profile
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    // Create a GLFW window
-    GLFWwindow* window = glfwCreateWindow(800, 800, "Wireframe Renderer", NULL, NULL);
-    if (window == NULL) {
-        std::cerr << "Failed to create GLFW window" << std::endl; // Print error message if window creation fails
-        glfwTerminate(); // Terminate GLFW
-        return -1; // Exit the program with an error code
-    }
-
-    // Make the created window's context current
+    // Create a windowed mode window and its OpenGL context
+    GLFWwindow* window = glfwCreateWindow(800, 800, "A2", NULL, NULL);
+    // Make the window's context current
     glfwMakeContextCurrent(window);
 
-    // Initialize GLEW to handle OpenGL extensions
-    if (glewInit() != GLEW_OK) {
-        std::cerr << "Failed to initialize GLEW" << std::endl; // Print error message if GLEW initialization fails
-        return -1; // Exit the program with an error code
-    }
+    // Initialize GLEW to manage OpenGL extensions
+    glewInit();
 
-    // Set the viewport size
-    glViewport(0, 0, 800, 800); // Define the viewport dimensions
+    // Set the viewport to cover the entire window
+    glViewport(0, 0, 800, 800);
 
-    // Compile and create the vertex shader
-    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER); // Create a vertex shader
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); // Attach shader source code
-    glCompileShader(vertexShader); // Compile the vertex shader
+    // Compile the vertex shader
+    GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);    // Create a vertex shader object
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); // Attach the shader source code
+    glCompileShader(vertexShader);                              // Compile the vertex shader
 
-    // Compile and create the fragment shader
-    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); // Create a fragment shader
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); // Attach shader source code
-    glCompileShader(fragmentShader); // Compile the fragment shader
+    // Compile the fragment shader
+    GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER); // Create a fragment shader object
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL); // Attach the shader source code
+    glCompileShader(fragmentShader);                            // Compile the fragment shader
 
-    // Create a shader program and attach shaders
-    GLuint shaderProgram = glCreateProgram(); // Create a shader program
-    glAttachShader(shaderProgram, vertexShader); // Attach the vertex shader to the program
-    glAttachShader(shaderProgram, fragmentShader); // Attach the fragment shader to the program
-    glLinkProgram(shaderProgram); // Link the shaders into the program
+    // Link shaders to create a shader program
+    GLuint shaderProgram = glCreateProgram();        // Create a shader program object
+    glAttachShader(shaderProgram, vertexShader);     // Attach the vertex shader
+    glAttachShader(shaderProgram, fragmentShader);   // Attach the fragment shader
+    glLinkProgram(shaderProgram);                    // Link the shaders into a program
 
-    // Clean up shader objects after linking
-    glDeleteShader(vertexShader); // Delete the vertex shader
-    glDeleteShader(fragmentShader); // Delete the fragment shader
+    // Delete the shader objects after linking them into the program
+    glDeleteShader(vertexShader);                    // Delete the vertex shader object
+    glDeleteShader(fragmentShader);                  // Delete the fragment shader object
 
     // Load OBJ file using tinyobjloader
     std::string inputfile = "../contingo.obj"; // Path to the .obj file
@@ -114,24 +94,27 @@ int main()
         }
     }
 
-    // Create and configure Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
-    GLuint VAO, VBO; // Variables to store VAO and VBO IDs
-    glGenVertexArrays(1, &VAO); // Generate a VAO
-    glGenBuffers(1, &VBO); // Generate a VBO
+    // Generate and bind Vertex Array Object (VAO) and Vertex Buffer Object (VBO)
+    GLuint VAO, VBO;
+    glGenVertexArrays(1, &VAO);            // Generate VAO to store vertex attribute configuration
+    glGenBuffers(1, &VBO);                 // Generate VBO to store vertex data in GPU memory
 
-    glBindVertexArray(VAO); // Bind the VAO
+    // Bind the VAO (recording the configuration of vertex attributes)
+    glBindVertexArray(VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the VBO
-    // Upload vertex data to the GPU
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW);
-    // Specify the vertex attribute layout
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0); // Enable the vertex attribute
+    // Bind and set the VBO's data
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the VBO to the GL_ARRAY_BUFFER target
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLfloat), vertices.data(), GL_STATIC_DRAW); // Copy vertex data to the VBO
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0); // Unbind the VBO
+    // Define vertex attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); // Describe vertex attribute layout
+    glEnableVertexAttribArray(0);          // Enable the vertex attribute at location 0
 
-    // Initialize transformation matrix to identity matrix
-    glm::mat4 transform = glm::mat4(1.0f);
+    // Unbind the VBO (the VAO remains bound)
+    glBindBuffer(GL_ARRAY_BUFFER, 0);     // Unbind the VBO to avoid unintended modifications
+
+    // Initialize the transformation matrix to the identity matrix
+    glm::mat4 transform = glm::mat4(1.0f); // Start with the identity matrix
 
     // Set the polygon mode to wireframe
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // Render polygons as wireframes
@@ -139,7 +122,7 @@ int main()
     // Main rendering loop
     while (!glfwWindowShouldClose(window)) // Continue until the window should close
     {
-        // Process user input
+        // Process user input and update the transformation matrix
         processInput(window, transform);
 
         // Clear the color buffer with a dark grey background
@@ -149,9 +132,9 @@ int main()
         // Use the shader program
         glUseProgram(shaderProgram);
 
-        // Set the transform matrix uniform in the shader
-        GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform"); // Get location of the uniform variable
-        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform)); // Set the uniform value
+        // Set the transformation matrix in the shader
+        GLuint transformLoc = glGetUniformLocation(shaderProgram, "transform"); // Get the location of the transform uniform
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform)); // Set the transform uniform in the shader
 
         // Bind VAO and draw the object
         glBindVertexArray(VAO); // Bind the VAO
@@ -163,14 +146,14 @@ int main()
         glfwPollEvents(); // Poll for and process events
     }
 
-    // Cleanup resources
-    glDeleteVertexArrays(1, &VAO); // Delete the VAO
-    glDeleteBuffers(1, &VBO); // Delete the VBO
-    glDeleteProgram(shaderProgram); // Delete the shader program
-    glfwDestroyWindow(window); // Destroy the GLFW window
-    glfwTerminate(); // Terminate GLFW
+    // Clean up and delete all the objects we've created
+    glDeleteVertexArrays(1, &VAO);        // Delete the VAO
+    glDeleteBuffers(1, &VBO);             // Delete the VBO
+    glDeleteProgram(shaderProgram);         // Delete the shader program
+    glfwDestroyWindow(window);              // Destroy the window
+    glfwTerminate();                        // Terminate GLFW
 
-    return 0; // Exit the program successfully
+    return 0;
 }
 
 // Function to process user input and update the transformation matrix
