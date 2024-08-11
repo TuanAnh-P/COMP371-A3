@@ -40,7 +40,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create a windowed mode window and its OpenGL context
-    GLFWwindow* window = glfwCreateWindow(800, 800, "A2", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(800, 800, "A3", NULL, NULL);
     // Make the window's context current
     glfwMakeContextCurrent(window);
 
